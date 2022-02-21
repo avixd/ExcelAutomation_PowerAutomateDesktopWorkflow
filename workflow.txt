@@ -1,0 +1,29 @@
+Display.InputDialog Title: $'''Input for the Location/Path of the Excel File ''' Message: $'''Please Input the Location/Path of the Excel''' InputType: Display.InputType.SingleLine IsTopMost: False UserInput=> UserInput ButtonPressed=> ButtonPressed3
+Excel.LaunchExcel.LaunchAndOpenUnderExistingProcess Path: UserInput Visible: True ReadOnly: False Instance=> ExcelInstance
+Excel.GetFirstFreeColumnRow Instance: ExcelInstance FirstFreeColumn=> FirstFreeColumn FirstFreeRow=> FirstFreeRow
+Excel.ReadFromExcel.ReadCells Instance: ExcelInstance StartColumn: $'''A''' StartRow: 1 EndColumn: FirstFreeColumn - 1 EndRow: FirstFreeRow - 1 ReadAsText: False FirstLineIsHeader: True RangeValue=> ExcelData
+Display.ShowMessageDialog.ShowMessageWithTimeout Title: $'''Flow Information''' Message: $'''The excel data is successfully read.''' Icon: Display.Icon.Information Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: False Timeout: 5 ButtonPressed=> ButtonPressed
+SET NewVar TO 2
+SET MaleCounter TO 1
+SET FeMaleCounter TO 1
+LOOP FOREACH CurrentItem IN ExcelData
+    IF CurrentItem['AnnualIncome'] > 50000 THEN
+        Excel.WriteToExcel.WriteCell Instance: ExcelInstance Value: $'''Group 1''' Column: $'''N''' Row: NewVar
+    ELSE IF CurrentItem['AnnualIncome'] <= 50000 THEN
+        Excel.WriteToExcel.WriteCell Instance: ExcelInstance Value: $'''Group 2''' Column: $'''N''' Row: NewVar
+    END
+    IF CurrentItem['Gender'] = $'''M''' THEN
+        Excel.WriteToExcel.WriteCell Instance: ExcelInstance Value: 1 Column: 15 Row: NewVar
+        Variables.IncreaseVariable Value: MaleCounter IncrementValue: 1 IncreasedValue=> MaleCounter
+    ELSE IF CurrentItem['Gender'] = $'''F''' THEN
+        Excel.WriteToExcel.WriteCell Instance: ExcelInstance Value: 0 Column: 15 Row: NewVar
+        Variables.IncreaseVariable Value: FeMaleCounter IncrementValue: 1 IncreasedValue=> FeMaleCounter
+    END
+    Variables.IncreaseVariable Value: NewVar IncrementValue: 1 IncreasedValue=> NewVar
+END
+Excel.WriteToExcel.WriteCell Instance: ExcelInstance Value: $'''Male/Female Count''' Column: 15 Row: 1
+Display.ShowMessageDialog.ShowMessageWithTimeout Title: $'''Male/Female Count''' Message: $'''Female Count: %FeMaleCounter - 1%
+Male Count:  %MaleCounter - 1%''' Icon: Display.Icon.Information Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: False Timeout: 5 ButtonPressed=> ButtonPressed2
+Excel.RunMacro Instance: ExcelInstance Macro: $'''\'customer Information.xlsm\'!FormulaToSum1'''
+Display.InputDialog Title: $'''Provide Location/Path to Save Output Excel File''' Message: $'''Provide Location/Path to Save Output Excel File''' InputType: Display.InputType.SingleLine IsTopMost: False UserInput=> UserInput2 ButtonPressed=> ButtonPressed4
+Excel.CloseExcel.CloseAndSaveAs Instance: ExcelInstance DocumentFormat: Excel.ExcelFormat.OpenXmlWorkbookMacroEnabled DocumentPath: UserInput2
